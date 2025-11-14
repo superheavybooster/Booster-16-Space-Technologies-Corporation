@@ -927,7 +927,7 @@
             storageBucket: "b16setc.firebasestorage.app",
             messagingSenderId: "271648192524",
             appId: "1:271648192524:web:273198986a71812399d629"
-        };
+        }
 
         // Initialize Firebase
         let database;
@@ -1003,10 +1003,11 @@
         });
 
         // Admin control variables
-        const ADMIN_PASSWORD = '73289563289649182657843659834279058743890679845'; // Change this!
+        const ADMIN_PASSWORD = 'booster16admin'; // Change this!
         const LAUNCH_DATE = new Date('November 13, 2025 18:45:00 UTC').getTime();
         let isAdmin = false;
-        let currentAdjustedLaunchTime = LAUNCH_DATE;
+        let holdStartTime = null;
+        let timeAtHold = null;
 
         // Show admin login prompt
         function showAdminLogin() {
@@ -1084,111 +1085,116 @@
         });
 
         // Toggle hold function
-        function toggleHold() {
-            if (!isAdmin || !database) return;
+       function toggleHold() {
+    if (!isAdmin || !database) return;
 
-            database.ref('countdown-hold').once('value').then((snapshot) => {
-                const currentHold = snapshot.val() || { isHeld: false, adjustedLaunchTime: LAUNCH_DATE };
+    database.ref('countdown-hold').once('value').then((snapshot) => {
+        const currentHold = snapshot.val() || { isHeld: false, totalHoldDuration: 0 };
+        const now = new Date().getTime();
 
-                if (currentHold.isHeld) {
-                    // Resume countdown
-                    const now = new Date().getTime();
-                    const holdDuration = now - currentHold.holdStartTime;
-                    const newLaunchTime = currentHold.adjustedLaunchTime + holdDuration;
-                    
-                    database.ref('countdown-hold').set({
-                        isHeld: false,
-                        adjustedLaunchTime: newLaunchTime,
-                        holdStartTime: null,
-                        frozenTimeRemaining: null
-                    });
-                    console.log('Countdown resumed - held for ' + Math.floor(holdDuration / 1000) + ' seconds');
-                } else {
-                    // Hold countdown
-                    const now = new Date().getTime();
-                    const launchTime = currentHold.adjustedLaunchTime || LAUNCH_DATE;
-                    const timeRemaining = launchTime - now;
-                    
-                    database.ref('countdown-hold').set({
-                        isHeld: true,
-                        adjustedLaunchTime: launchTime,
-                        holdStartTime: now,
-                        frozenTimeRemaining: timeRemaining
-                    });
-                    console.log('Countdown held at T-' + Math.floor(timeRemaining / 1000) + ' seconds');
-                }
-
-                updateAdminButton();
+        if (currentHold.isHeld) {
+            // Resume countdown - calculate total hold duration
+            const holdDuration = now - currentHold.holdStartTime;
+            const newTotalHoldDuration = (currentHold.totalHoldDuration || 0) + holdDuration;
+            
+            database.ref('countdown-hold').set({
+                isHeld: false,
+                holdStartTime: null,
+                timeAtHold: null,
+                totalHoldDuration: newTotalHoldDuration
             });
+            console.log('Countdown resumed. Total hold duration: ' + newTotalHoldDuration + 'ms');
+        } else {
+            // Hold countdown - calculate current distance to adjusted launch
+            const adjustedLaunchDate = LAUNCH_DATE + (currentHold.totalHoldDuration || 0);
+            const distance = adjustedLaunchDate - now;
+            
+            database.ref('countdown-hold').set({
+                isHeld: true,
+                holdStartTime: now,
+                timeAtHold: distance,
+                totalHoldDuration: currentHold.totalHoldDuration || 0
+            });
+            console.log('Countdown held at T-' + Math.floor(distance / 1000) + ' seconds');
         }
+
+        updateAdminButton();
+    });
+}
 
         // Countdown timer with hold support
-        function updateCountdown() {
-            let holdData = { isHeld: false, adjustedLaunchTime: LAUNCH_DATE };
+function updateCountdown() {
+    let adjustedLaunchDate = LAUNCH_DATE;
+    
+    // Listen for hold status changes in real-time
+    if (database) {
+        database.ref('countdown-hold').on('value', (snapshot) => {
+            const hold = snapshot.val() || { isHeld: false, totalHoldDuration: 0 };
             
-            // Listen for hold status changes in real-time
-            if (database) {
-                database.ref('countdown-hold').on('value', (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        holdData = data;
-                        currentAdjustedLaunchTime = data.adjustedLaunchTime || LAUNCH_DATE;
-                    }
-                });
+            if (hold && hold.isHeld) {
+                holdStartTime = hold.holdStartTime;
+                timeAtHold = hold.timeAtHold;
+            } else {
+                holdStartTime = null;
+                timeAtHold = null;
+                // Calculate adjusted launch date when not held
+                adjustedLaunchDate = LAUNCH_DATE + (hold.totalHoldDuration || 0);
             }
+        });
+    }
 
-            setInterval(() => {
-                const now = new Date().getTime();
-                let distance;
-                
-                if (holdData.isHeld && holdData.frozenTimeRemaining !== null) {
-                    // When held, show the frozen time
-                    distance = holdData.frozenTimeRemaining;
-                } else {
-                    // Normal countdown using adjusted launch time
-                    const launchTime = holdData.adjustedLaunchTime || LAUNCH_DATE;
-                    distance = launchTime - now;
-                }
-
-                if (distance > 0) {
-                    // T-minus (before launch)
-                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                    document.getElementById('days').textContent = String(days).padStart(2, '0');
-                    document.getElementById('hours').textContent = String(hours).padStart(2, '0');
-                    document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
-                    document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
-            
-                    const label = holdData.isHeld ? 'T-minus (HOLD)' : 'T-minus';
-                    const labelEl = document.querySelector('.countdown-container p');
-                    if (labelEl) {
-                        labelEl.textContent = label;
-                        labelEl.style.color = holdData.isHeld ? '#ff6b6b' : '#667eea';
-                    }
-                } else {
-                    // T+plus (after launch)
-                    const elapsed = Math.abs(distance);
-                    const days = Math.floor(elapsed / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((elapsed % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
-
-                    document.getElementById('days').textContent = String(days).padStart(2, '0');
-                    document.getElementById('hours').textContent = String(hours).padStart(2, '0');
-                    document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
-                    document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
-            
-                    const labelEl = document.querySelector('.countdown-container p');
-                    if (labelEl) {
-                        labelEl.textContent = 'T+plus';
-                        labelEl.style.color = '#667eea';
-                    }
-                }
-            }, 1000);
+    setInterval(() => {
+        let distance;
+        const isHeld = timeAtHold !== null;
+        const now = new Date().getTime();
+        
+        if (isHeld) {
+            distance = timeAtHold;
+        } else {
+            distance = adjustedLaunchDate - now;
         }
+
+        updateDisplay(distance, isHeld);
+    }, 1000);
+}
+
+// Add this helper function
+function updateDisplay(distance, isHeld) {
+    if (distance > 0) {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById('days').textContent = String(days).padStart(2, '0');
+        document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+        document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+        document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+
+        const label = isHeld ? 'T-minus (HOLD)' : 'T-minus';
+        const labelEl = document.querySelector('.countdown-container p');
+        if (labelEl) {
+            labelEl.textContent = label;
+            labelEl.style.color = isHeld ? '#ff6b6b' : '#667eea';
+        }
+    } else {
+        const elapsed = Math.abs(distance);
+        const days = Math.floor(elapsed / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((elapsed % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+
+        document.getElementById('days').textContent = String(days).padStart(2, '0');
+        document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+        document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+        document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+
+        const labelEl = document.querySelector('.countdown-container p');
+        if (labelEl) {
+            labelEl.textContent = 'T+plus';
+        }
+    }
+}
 
         updateCountdown();
 
