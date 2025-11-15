@@ -866,6 +866,41 @@
             <div class="cards">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <h3>Orbiview Analytics Communi-One Beta</h3>
+                        <span class="mission-badge">Upcoming</span>
+                    </div>
+                    <p style="color: #667eea; margin-bottom: 0.5rem;">November 15, 2025 • Cape Canaveral</p>
+                    <div class="countdown-container">
+                    <p style="color: #667eea; margin-bottom: 0.5rem; font-size: 1.4rem; font-weight: 700;">T-minus</p>
+                    <div class="countdown" id="countdown">
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="days">00</div>
+                            <div class="countdown-label">Days</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="hours">00</div>
+                            <div class="countdown-label">Hours</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="minutes">00</div>
+                            <div class="countdown-label">Minutes</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="seconds">00</div>
+                            <div class="countdown-label">Seconds</div>
+                        </div>
+                    </div>
+                </div>
+                    <p>The second operational flight of SkyLynx-1. We are gonna get into an SSO orbit that is ~600x600 kilometers in altitude. We are gonna deploy 6 out of the 12 cubesats in that orbit and then we are gonna get down to a 500x500 kilometer in altitude orbit to deploy the other 6 cubesats. After that we are gonna de-orbit and have a break apart during reentry and the parts of the second stage are gonna have a splashdown in the Pacific ocean as close as we can to point Nemo.</p>
+                    <p>Where you can watch the rocket launch?</p>
+                    <p>On our our company's <a href="https://www.twitch.tv/superheavybooster" class="text-link">Twitch channel!</a></p>
+                </div>
+            </div>
+        </section>
+        <section style="padding-top: 2rem;">
+            <div class="cards">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                         <h3>Orbiview Analytics Communi-One</h3>
                         <span class="mission-badge-failure">Completed | Failure</span>
                     </div>
@@ -891,7 +926,8 @@
                         </div> -->
                     </div>
                 </div>
-                    <p>The first operational flight of SkyLynx-1. We are gonna get into an SSO orbit that is ~600x600 kilometers in altitude. We are gonna deploy 6 out of the 12 cubesats in that orbit and then we are gonna get down to a 500x500 kilometer in altitude orbit to deploy the other 6 cubesats. After that we are gonna de-orbit and have a break apart during reentry and the parts of the second stage are gonna have a splashdown in the Pacific ocean as close as we can to point Nemo.</p>
+                    <p style="margin-bottom: 1rem;">The first flight of SkyLynx-1, Communi-One, didn't go as planned: the main engine failed to ignite at liftoff. The SRBs did fire and lifted the rocket off the pad, but after separation, we had no thrust and had to trigger the flight termination system. The second stage couldn't be used at that altitude and speed, and the mission ended safely by triggering the FTS.</p>
+                    <p>Orbiview Analytics was prepared with backup satellites, and we've agreed to move forward together. We offered a $1 million reimbursement for the lost satellites, which they kindly declined, reinforcing our strong partnership as we continue planning future missions.</p>
                     <p>Where you can watch the rocket launch?</p>
                     <p>On our our company's <a href="https://www.twitch.tv/superheavybooster" class="text-link">Twitch channel!</a></p>
                 </div>
@@ -1102,7 +1138,7 @@
 
         // Admin control variables
         const ADMIN_PASSWORD = '73289563289649182657843659834279058743890679845'; // Change this!
-        const LAUNCH_DATE = new Date('November 15, 2025 16:00:00 UTC').getTime();
+        const LAUNCH_DATE = new Date('November 16, 2025 18:30:00 UTC').getTime();
         let isAdmin = false;
         let holdStartTime = null;
         let timeAtHold = null;
